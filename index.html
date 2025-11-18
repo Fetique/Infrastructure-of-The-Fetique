@@ -29,11 +29,11 @@
         
         .header {
             text-align: center;
-            padding: 30px 0;
+            padding: 20px 0;
             border-bottom: 1px solid transparent;
             border-image: var(--gold);
             border-image-slice: 1;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         
         .gold-text {
@@ -60,8 +60,8 @@
         .status-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
+            gap: 15px;
+            margin-top: 20px;
         }
         
         .status-card {
@@ -69,8 +69,8 @@
             border: 1px solid transparent;
             border-image: var(--gold);
             border-image-slice: 1;
-            padding: 20px;
-            border-radius: 12px;
+            padding: 15px;
+            border-radius: 10px;
             backdrop-filter: blur(10px);
         }
         
@@ -80,8 +80,8 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             font-weight: 600;
-            font-size: 1.2em;
-            margin-bottom: 15px;
+            font-size: 1.1em;
+            margin-bottom: 12px;
         }
         
         .status-content {
@@ -89,63 +89,72 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            line-height: 1.5;
+            line-height: 1.4;
+            font-size: 0.95em;
         }
         
         .status-indicator {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             display: inline-block;
-            margin-right: 8px;
+            margin-right: 6px;
         }
         
-        .status-up { background: #00FF88; box-shadow: 0 0 10px #00FF88; }
-        .status-down { background: #FF2D55; box-shadow: 0 0 10px #FF2D55; }
-        .status-warning { background: #FFCC00; box-shadow: 0 0 10px #FFCC00; }
-        
-        .auth-section {
-            text-align: center;
-            padding: 60px 20px;
-        }
+        .status-up { background: #00FF88; box-shadow: 0 0 8px #00FF88; }
+        .status-down { background: #FF2D55; box-shadow: 0 0 8px #FF2D55; }
+        .status-warning { background: #FFCC00; box-shadow: 0 0 8px #FFCC00; }
         
         .refresh-button {
             background: var(--gold);
             border: none;
-            padding: 12px 30px;
-            border-radius: 8px;
+            padding: 10px 25px;
+            border-radius: 6px;
             color: black;
             font-weight: 600;
             cursor: pointer;
-            margin-top: 30px;
+            margin-top: 20px;
+            font-size: 0.9em;
         }
         
         .access-denied {
             text-align: center;
-            padding: 60px 20px;
+            padding: 40px 20px;
         }
         
         .explanation {
-            font-size: 0.9em;
+            font-size: 0.8em;
             opacity: 0.8;
-            margin-top: 8px;
+            margin-top: 6px;
+        }
+        
+        .debug-info {
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 0.8em;
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="accessDenied" class="access-denied" style="display: none;">
+        <!-- Секция для неавторизованных -->
+        <div id="accessDenied" class="access-denied">
             <div class="header">
-                <h1 class="gold-text" style="font-size: 2.5em;">ИНФРАСТРУКТУРА</h1>
-                <h2 class="silver-text" style="font-size: 1.8em;">FETIQUE</h2>
+                <h1 class="gold-text" style="font-size: 1.8em;">ИНФРАСТРУКТУРА</h1>
+                <h2 class="silver-text" style="font-size: 1.4em;">FETIQUE</h2>
             </div>
             <p class="silver-text">Доступ разрешен только авторизованному персоналу</p>
             <p class="silver-text">Статус: <span class="status-indicator status-up"></span> Системы работают</p>
+            <div id="debugInfo" class="debug-info"></div>
         </div>
         
+        <!-- Основная панель для авторизованных -->
         <div id="dashboard" style="display: none;">
             <div class="header">
-                <h1 class="gold-text" style="font-size: 2.2em;">СТАТУС ИНФРАСТРУКТУРЫ</h1>
+                <h1 class="gold-text" style="font-size: 1.6em;">СТАТУС ИНФРАСТРУКТУРЫ</h1>
                 <p class="silver-text">Мониторинг систем в реальном времени</p>
             </div>
             
@@ -153,7 +162,7 @@
                 <div class="status-card">
                     <div class="card-title"><span class="emoji">🔐</span> SSL СЕРТИФИКАТЫ</div>
                     <div id="sslStatus" class="status-content">Проверка...</div>
-                    <div class="explanation silver-text">Проверяет валидность и срок действия SSL сертификатов</div>
+                    <div class="explanation silver-text">Проверяет валидность SSL сертификатов</div>
                 </div>
                 
                 <div class="status-card">
@@ -171,7 +180,7 @@
                 <div class="status-card">
                     <div class="card-title"><span class="emoji">⚡</span> ПРОИЗВОДИТЕЛЬНОСТЬ</div>
                     <div id="responseStatus" class="status-content">Проверка...</div>
-                    <div class="explanation silver-text">Измеряет время загрузки и отклика серверов</div>
+                    <div class="explanation silver-text">Измеряет время загрузки серверов</div>
                 </div>
             </div>
             
@@ -182,7 +191,8 @@
     </div>
 
     <script>
-        const SALT = "fetique-infrastructure-2024-secure";
+        // 🔐 БЕЗОПАСНАЯ КОНФИГУРАЦИЯ - ЗАМЕНИТЕ НА ВАШ ХЕШ!
+        const SALT = "fetique-infrastructure-2025-secure";
         const ALLOWED_USER_HASHES = [
             "566a93b7713454ba1460c1b6b72452b00dfbc416d7aa8a29897e5444d98ea3c8"
         ];
@@ -193,24 +203,48 @@
             return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
+        function showDebugInfo(info) {
+            document.getElementById('debugInfo').style.display = 'block';
+            document.getElementById('debugInfo').innerHTML = info;
+        }
+
         async function checkTelegramAuth() {
+            let debugInfo = "Отладка аутентификации:<br>";
+            
             if (window.Telegram && Telegram.WebApp) {
+                debugInfo += "✓ Telegram WebApp доступен<br>";
+                
                 Telegram.WebApp.expand();
                 Telegram.WebApp.setHeaderColor('#0A0A0A');
                 Telegram.WebApp.setBackgroundColor('#0A0A0A');
                 
                 const user = Telegram.WebApp.initDataUnsafe.user;
                 if (user && user.id) {
+                    debugInfo += `✓ Пользователь найден: ${user.id}<br>`;
+                    
                     const userIdHash = await sha256(user.id.toString() + SALT);
+                    debugInfo += `✓ Хеш пользователя: ${userIdHash}<br>`;
+                    debugInfo += `✓ Разрешенные хеши: ${ALLOWED_USER_HASHES.join(', ')}<br>`;
+                    
                     if (ALLOWED_USER_HASHES.includes(userIdHash)) {
+                        debugInfo += "✓ Доступ РАЗРЕШЕН!<br>";
                         document.getElementById('dashboard').style.display = 'block';
+                        document.getElementById('accessDenied').style.display = 'none';
                         runAllChecks();
                         return true;
+                    } else {
+                        debugInfo += "✗ Доступ ЗАПРЕЩЕН - хеш не совпадает<br>";
                     }
+                } else {
+                    debugInfo += "✗ Пользователь не найден в initData<br>";
                 }
+            } else {
+                debugInfo += "✗ Telegram WebApp не доступен<br>";
             }
             
+            showDebugInfo(debugInfo);
             document.getElementById('accessDenied').style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
             return false;
         }
 
@@ -224,7 +258,7 @@
         async function checkSSL() {
             try {
                 const statusDiv = document.getElementById('sslStatus');
-                statusDiv.innerHTML = '<span class="status-indicator status-warning"></span>Проверка SSL...';
+                statusDiv.innerHTML = '<span class="status-indicator status-warning"></span>Проверка...';
                 
                 const startTime = performance.now();
                 const response = await fetch('https://fetique.com', { 
@@ -239,8 +273,7 @@
                         <span class="status-indicator status-up"></span>
                         <strong>fetique.com</strong><br>
                         Статус: Активен<br>
-                        Протокол: TLS<br>
-                        Время ответа: ${Math.round(responseTime)}ms
+                        Ответ: ${Math.round(responseTime)}ms
                     `;
                 } else {
                     statusDiv.innerHTML = '<span class="status-indicator status-down"></span>Ошибка SSL';
@@ -264,9 +297,7 @@
                         '<span class="status-indicator status-up"></span>SSL активен';
                     resolve();
                 };
-                img.onerror = function() {
-                    reject();
-                };
+                img.onerror = reject;
                 img.src = 'https://fetique.com/favicon.ico?' + Date.now();
             });
         }
@@ -302,7 +333,7 @@
                     document.getElementById('dnsStatus').innerHTML = `
                         <span class="status-indicator status-up"></span>
                         <strong>Почтовые серверы</strong><br>
-                        Найдено записей: ${data.Answer.length}<br>
+                        Записей: ${data.Answer.length}<br>
                         Основной: ${primaryMX}
                     `;
                 } else {
@@ -332,9 +363,8 @@
                 document.getElementById('responseStatus').innerHTML = `
                     <span class="status-indicator status-up"></span>
                     <strong>Производительность</strong><br>
-                    Время загрузки: ${Math.round(loadTime)}ms<br>
-                    Оценка: ${performanceStatus}<br>
-                    Проверено: ${new Date().toLocaleTimeString()}
+                    Загрузка: ${Math.round(loadTime)}ms<br>
+                    Оценка: ${performanceStatus}
                 `;
             } catch (error) {
                 document.getElementById('responseStatus').innerHTML = 
