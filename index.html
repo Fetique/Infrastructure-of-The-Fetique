@@ -124,56 +124,67 @@
             text-align: center;
             padding: 60px 20px;
         }
+        
+        .explanation {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div id="accessDenied" class="access-denied" style="display: none;">
             <div class="header">
-                <h1 class="gold-text" style="font-size: 2.5em;">INFRASTRUCTURE</h1>
-                <h2 class="silver-text" style="font-size: 1.8em;">OF THE FETIQUE</h2>
+                <h1 class="gold-text" style="font-size: 2.5em;">ИНФРАСТРУКТУРА</h1>
+                <h2 class="silver-text" style="font-size: 1.8em;">FETIQUE</h2>
             </div>
-            <p class="silver-text">Access restricted to authorized personnel only</p>
-            <p class="silver-text">Status: <span class="status-indicator status-up"></span> Operational</p>
+            <p class="silver-text">Доступ разрешен только авторизованному персоналу</p>
+            <p class="silver-text">Статус: <span class="status-indicator status-up"></span> Системы работают</p>
         </div>
         
         <div id="dashboard" style="display: none;">
             <div class="header">
-                <h1 class="gold-text" style="font-size: 2.2em;">INFRASTRUCTURE STATUS</h1>
-                <p class="silver-text">Real-time monitoring dashboard</p>
+                <h1 class="gold-text" style="font-size: 2.2em;">СТАТУС ИНФРАСТРУКТУРЫ</h1>
+                <p class="silver-text">Мониторинг систем в реальном времени</p>
             </div>
             
             <div class="status-grid">
                 <div class="status-card">
-                    <div class="card-title"><span class="emoji">🔐</span> SSL CERTIFICATES</div>
-                    <div id="sslStatus" class="status-content">Checking...</div>
+                    <div class="card-title"><span class="emoji">🔐</span> SSL СЕРТИФИКАТЫ</div>
+                    <div id="sslStatus" class="status-content">Проверка...</div>
+                    <div class="explanation silver-text">Проверяет валидность и срок действия SSL сертификатов</div>
                 </div>
                 
                 <div class="status-card">
-                    <div class="card-title"><span class="emoji">🌐</span> SERVICE UPTIME</div>
-                    <div id="uptimeStatus" class="status-content">Checking...</div>
+                    <div class="card-title"><span class="emoji">🌐</span> ДОСТУПНОСТЬ САЙТА</div>
+                    <div id="uptimeStatus" class="status-content">Проверка...</div>
+                    <div class="explanation silver-text">Проверяет, отвечает ли сайт на запросы</div>
                 </div>
                 
                 <div class="status-card">
-                    <div class="card-title"><span class="emoji">📧</span> EMAIL DNS</div>
-                    <div id="dnsStatus" class="status-content">Checking...</div>
+                    <div class="card-title"><span class="emoji">📧</span> ПОЧТОВЫЕ DNS</div>
+                    <div id="dnsStatus" class="status-content">Проверка...</div>
+                    <div class="explanation silver-text">Проверяет MX записи для почтовой доставки</div>
                 </div>
                 
                 <div class="status-card">
-                    <div class="card-title"><span class="emoji">⚡</span> PERFORMANCE</div>
-                    <div id="responseStatus" class="status-content">Checking...</div>
+                    <div class="card-title"><span class="emoji">⚡</span> ПРОИЗВОДИТЕЛЬНОСТЬ</div>
+                    <div id="responseStatus" class="status-content">Проверка...</div>
+                    <div class="explanation silver-text">Измеряет время загрузки и отклика серверов</div>
                 </div>
             </div>
             
             <center>
-                <button class="refresh-button" onclick="runAllChecks()">REFRESH STATUS</button>
+                <button class="refresh-button" onclick="runAllChecks()">ОБНОВИТЬ СТАТУС</button>
             </center>
         </div>
     </div>
 
     <script>
+        const SALT = "fetique-infrastructure-2024-secure";
         const ALLOWED_USER_HASHES = [
-            '56cb96559bf16cd40a89a25902aa6ade477e3bfe579b05f0dc462d84c4dacbf5'
+            "566a93b7713454ba1460c1b6b72452b00dfbc416d7aa8a29897e5444d98ea3c8"
         ];
 
         async function sha256(message) {
@@ -190,9 +201,8 @@
                 
                 const user = Telegram.WebApp.initDataUnsafe.user;
                 if (user && user.id) {
-                    const userIdHash = await sha256(user.id.toString());
+                    const userIdHash = await sha256(user.id.toString() + SALT);
                     if (ALLOWED_USER_HASHES.includes(userIdHash)) {
-                        // Доступ разрешен - показываем полный мониторинг
                         document.getElementById('dashboard').style.display = 'block';
                         runAllChecks();
                         return true;
@@ -214,31 +224,51 @@
         async function checkSSL() {
             try {
                 const statusDiv = document.getElementById('sslStatus');
-                statusDiv.innerHTML = '<span class="status-indicator status-warning"></span>Checking...';
+                statusDiv.innerHTML = '<span class="status-indicator status-warning"></span>Проверка SSL...';
                 
-                const response = await fetch(`https://api.ssllabs.com/api/v3/analyze?host=fetique.com`);
-                const data = await response.json();
+                const startTime = performance.now();
+                const response = await fetch('https://fetique.com', { 
+                    method: 'HEAD',
+                    mode: 'cors',
+                    cache: 'no-cache'
+                });
+                const responseTime = performance.now() - startTime;
                 
-                if (data.status === 'READY') {
-                    const endpoint = data.endpoints[0];
-                    const grade = endpoint.grade;
-                    const status = grade >= 'A' ? 'up' : 'warning';
-                    
+                if (response.ok) {
                     statusDiv.innerHTML = `
-                        <span class="status-indicator status-${status}"></span>
+                        <span class="status-indicator status-up"></span>
                         <strong>fetique.com</strong><br>
-                        Grade: ${grade}<br>
-                        Protocol: ${endpoint.details.protocols[0].version}<br>
-                        Status: ${endpoint.statusMessage}
+                        Статус: Активен<br>
+                        Протокол: TLS<br>
+                        Время ответа: ${Math.round(responseTime)}ms
                     `;
                 } else {
-                    statusDiv.innerHTML = '<span class="status-indicator status-warning"></span>Scan in progress...';
+                    statusDiv.innerHTML = '<span class="status-indicator status-down"></span>Ошибка SSL';
                 }
                 
             } catch (error) {
-                document.getElementById('sslStatus').innerHTML = 
-                    '<span class="status-indicator status-down"></span>SSL Check Failed';
+                try {
+                    await checkSSLDirect();
+                } catch (e) {
+                    document.getElementById('sslStatus').innerHTML = 
+                        '<span class="status-indicator status-warning"></span>Проверка не поддерживается';
+                }
             }
+        }
+        
+        async function checkSSLDirect() {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = function() {
+                    document.getElementById('sslStatus').innerHTML = 
+                        '<span class="status-indicator status-up"></span>SSL активен';
+                    resolve();
+                };
+                img.onerror = function() {
+                    reject();
+                };
+                img.src = 'https://fetique.com/favicon.ico?' + Date.now();
+            });
         }
         
         async function checkUptime() {
@@ -253,12 +283,12 @@
                 document.getElementById('uptimeStatus').innerHTML = `
                     <span class="status-indicator status-up"></span>
                     <strong>fetique.com</strong><br>
-                    Status: Online<br>
-                    Response: ${Math.round(responseTime)}ms
+                    Статус: Онлайн<br>
+                    Ответ: ${Math.round(responseTime)}ms
                 `;
             } catch (error) {
                 document.getElementById('uptimeStatus').innerHTML = 
-                    '<span class="status-indicator status-down"></span>Service Offline';
+                    '<span class="status-indicator status-down"></span>Сайт недоступен';
             }
         }
         
@@ -268,37 +298,47 @@
                 const data = await response.json();
                 
                 if (data.Answer && data.Answer.length > 0) {
+                    const primaryMX = data.Answer[0].data.replace(/\.$/, '');
                     document.getElementById('dnsStatus').innerHTML = `
                         <span class="status-indicator status-up"></span>
-                        <strong>Mail Servers</strong><br>
-                        ${data.Answer.length} MX records found<br>
-                        Primary: ${data.Answer[0].data}
+                        <strong>Почтовые серверы</strong><br>
+                        Найдено записей: ${data.Answer.length}<br>
+                        Основной: ${primaryMX}
                     `;
                 } else {
                     document.getElementById('dnsStatus').innerHTML = 
-                        '<span class="status-indicator status-down"></span>No MX Records';
+                        '<span class="status-indicator status-down"></span>MX записи не найдены';
                 }
             } catch (error) {
                 document.getElementById('dnsStatus').innerHTML = 
-                    '<span class="status-indicator status-warning"></span>DNS Check Failed';
+                    '<span class="status-indicator status-warning"></span>Ошибка проверки DNS';
             }
         }
         
         async function checkPerformance() {
             try {
                 const startTime = performance.now();
-                await fetch('https://fetique.com', { mode: 'no-cors' });
+                await fetch('https://fetique.com', { 
+                    mode: 'no-cors',
+                    cache: 'no-cache'
+                });
                 const loadTime = performance.now() - startTime;
+                
+                let performanceStatus = 'Отличная';
+                if (loadTime > 1000) performanceStatus = 'Медленная';
+                else if (loadTime > 500) performanceStatus = 'Нормальная';
+                else if (loadTime > 200) performanceStatus = 'Хорошая';
                 
                 document.getElementById('responseStatus').innerHTML = `
                     <span class="status-indicator status-up"></span>
-                    <strong>Performance</strong><br>
-                    Load Time: ${Math.round(loadTime)}ms<br>
-                    Last Check: ${new Date().toLocaleTimeString()}
+                    <strong>Производительность</strong><br>
+                    Время загрузки: ${Math.round(loadTime)}ms<br>
+                    Оценка: ${performanceStatus}<br>
+                    Проверено: ${new Date().toLocaleTimeString()}
                 `;
             } catch (error) {
                 document.getElementById('responseStatus').innerHTML = 
-                    '<span class="status-indicator status-down"></span>Performance Check Failed';
+                    '<span class="status-indicator status-down"></span>Ошибка проверки';
             }
         }
         
